@@ -45,6 +45,32 @@ body {
   color: var(--muted);
 }
 
+.page-nav {
+  display: flex;
+  gap: 4px;
+}
+
+.page-nav-link {
+  font-size: 0.85rem;
+  color: var(--muted);
+  text-decoration: none;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+}
+
+.page-nav-link:hover {
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+
+.page-nav-link.active {
+  background: var(--panel);
+  border-color: var(--border);
+  color: var(--ink);
+  font-weight: 600;
+}
+
 .auth-area {
   flex-shrink: 0;
 }
@@ -398,3 +424,90 @@ body {
 .btn.danger:hover { background: #f7e6e2; }
 
 .hidden { display: none !important; }
+
+/* Bookings list page */
+
+.venue-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.filter-btn {
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--ink);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.filter-btn:hover {
+  background: var(--accent-soft);
+}
+
+.filter-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.table-wrap {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px;
+  overflow-x: auto;
+}
+
+.bookings-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.bookings-table th,
+.bookings-table td {
+  text-align: left;
+  padding: 10px 12px;
+  white-space: nowrap;
+}
+
+.bookings-table td.notes-cell {
+  white-space: normal;
+  min-width: 180px;
+  color: var(--muted);
+}
+
+.bookings-table th {
+  color: var(--muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-bottom: 1px solid var(--border);
+}
+
+.bookings-table tbody tr {
+  border-bottom: 1px solid var(--border);
+}
+
+.bookings-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.bookings-table tbody tr:hover {
+  background: var(--accent-soft);
+}
+
+.table-edit-link {
+  display: inline-block;
+  padding: 5px 12px;
+  font-size: 0.8rem;
+  text-decoration: none;
+}
+
+.table-wrap .empty-state {
+  padding: 20px 12px;
+}

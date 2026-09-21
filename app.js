@@ -4,7 +4,6 @@ const prevMonthBtn = document.getElementById("prevMonth");
 const nextMonthBtn = document.getElementById("nextMonth");
 const selectedDateLabel = document.getElementById("selectedDateLabel");
 const bookingList = document.getElementById("bookingList");
-const syncStatus = document.getElementById("syncStatus");
 
 const overlay = document.getElementById("overlay");
 const modalTitle = document.getElementById("modalTitle");
@@ -16,160 +15,30 @@ const venueOtherInput = document.getElementById("venueOther");
 const notesInput = document.getElementById("notes");
 const saveBtn = document.getElementById("bookingForm").querySelector('button[type="submit"]');
 
-const PRESET_VENUES = ["Ibunda Garden Hall", "Ibunda Mini Hall", "CSH A"];
 const closeModalBtn = document.getElementById("closeModal");
 const cancelFormBtn = document.getElementById("cancelForm");
 const deleteBookingBtn = document.getElementById("deleteBooking");
 
-const googleSignInBtnContainer = document.getElementById("googleSignInBtn");
-const signedInAsEl = document.getElementById("signedInAs");
-const userEmailLabel = document.getElementById("userEmailLabel");
-const signOutBtn = document.getElementById("signOutBtn");
-
 const todayStr = toDateStr(new Date());
+
+// If arriving from the bookings list ("Edit" link with ?date=YYYY-MM-DD),
+// jump straight to that month/date instead of the current one.
+const requestedDate = new URLSearchParams(window.location.search).get("date");
+const initialDate = requestedDate && /^\d{4}-\d{2}-\d{2}$/.test(requestedDate) ? requestedDate : todayStr;
 
 let viewYear, viewMonth; // viewMonth is 0-indexed
 {
-  const now = new Date();
-  viewYear = now.getFullYear();
-  viewMonth = now.getMonth();
+  const [y, m] = initialDate.split("-").map(Number);
+  viewYear = y;
+  viewMonth = m - 1;
 }
 
-let selectedDate = todayStr;
+let selectedDate = initialDate;
 let editingId = null;
-let bookings = [];
 
-function setStatus(message, isError) {
-  syncStatus.textContent = message;
-  syncStatus.classList.toggle("error", !!isError);
-}
-
-// --- Google Sign-In -------------------------------------------------
-// The decoded profile is cached in localStorage purely so the person
-// doesn't have to re-click "Sign in" every page load; the ID token itself
-// is not stored or re-verified, which is an acceptable trade-off for an
-// internal booking tool but not a security boundary.
-const AUTH_STORAGE_KEY = "catering-current-user";
-let currentUser = loadCurrentUser();
-
-function loadCurrentUser() {
-  try {
-    const raw = localStorage.getItem(AUTH_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
-
-function setCurrentUser(user) {
-  currentUser = user;
-  if (user) {
-    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
-  } else {
-    localStorage.removeItem(AUTH_STORAGE_KEY);
-  }
-  renderAuthUI();
-}
-
-function parseJwt(token) {
-  const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
-  const jsonPayload = decodeURIComponent(
-    atob(base64).split("").map(c => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2)).join("")
-  );
-  return JSON.parse(jsonPayload);
-}
-
-function handleCredentialResponse(response) {
-  const payload = parseJwt(response.credential);
-  setCurrentUser({ email: payload.email, name: payload.name || payload.email });
-  setStatus("");
-}
-
-function renderAuthUI() {
-  if (currentUser) {
-    googleSignInBtnContainer.classList.add("hidden");
-    signedInAsEl.classList.remove("hidden");
-    userEmailLabel.textContent = currentUser.email;
-  } else {
-    googleSignInBtnContainer.classList.remove("hidden");
-    signedInAsEl.classList.add("hidden");
-  }
-}
-
-signOutBtn.addEventListener("click", () => {
-  setCurrentUser(null);
-  if (window.google?.accounts?.id) {
-    google.accounts.id.disableAutoSelect();
-  }
-});
-
-function initGoogleSignIn() {
-  if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.includes("PASTE_YOUR_GOOGLE_OAUTH_CLIENT_ID_HERE")) {
-    setStatus("Google Sign-In not configured: set GOOGLE_CLIENT_ID in config.js.", true);
-    return;
-  }
-  if (!window.google?.accounts?.id) {
-    setTimeout(initGoogleSignIn, 300); // GIS script loads async; retry until ready
-    return;
-  }
-  google.accounts.id.initialize({
-    client_id: GOOGLE_CLIENT_ID,
-    callback: handleCredentialResponse,
-  });
-  google.accounts.id.renderButton(googleSignInBtnContainer, { theme: "outline", size: "medium" });
-}
-
-function requireSignIn() {
-  if (currentUser) return true;
-  setStatus("Please sign in with Google before adding or editing bookings.", true);
-  if (window.google?.accounts?.id) google.accounts.id.prompt();
-  return false;
-}
-
-async function fetchBookings() {
-  if (!API_URL || API_URL.includes("PASTE_YOUR_DEPLOYED_WEB_APP_URL_HERE")) {
-    setStatus("Not connected: set API_URL in config.js to your deployed Apps Script URL.", true);
-    return;
-  }
-  setStatus("Loading bookings…");
-  try {
-    const res = await fetch(API_URL);
-    if (!res.ok) throw new Error(`Request failed (${res.status})`);
-    const data = await res.json();
-    bookings = data.bookings || [];
-    setStatus("");
-  } catch (err) {
-    setStatus(`Could not load bookings: ${err.message}`, true);
-  }
+function onBookingsUpdated() {
   renderCalendar();
   renderDayPanel();
-}
-
-async function postToApi(payload) {
-  const res = await fetch(API_URL, {
-    method: "POST",
-    // text/plain avoids a CORS preflight against Apps Script; the body is
-    // still JSON and is parsed as such server-side.
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) throw new Error(`Request failed (${res.status})`);
-  const result = await res.json();
-  if (!result.success) throw new Error(result.error || "Unknown error");
-  return result;
-}
-
-function toDateStr(date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
-
-function formatLongDate(dateStr) {
-  const [y, m, d] = dateStr.split("-").map(Number);
-  const date = new Date(y, m - 1, d);
-  return date.toLocaleDateString(undefined, { weekday: "long", year: "numeric", month: "long", day: "numeric" });
 }
 
 const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -264,12 +133,6 @@ function renderDayPanel() {
   bookingList.appendChild(addBtn);
 }
 
-function escapeHtml(str) {
-  const div = document.createElement("div");
-  div.textContent = str;
-  return div.innerHTML;
-}
-
 function openModal(dateStr, booking) {
   editingId = booking ? booking.id : null;
   modalTitle.textContent = booking ? "Edit Booking" : "New Booking";
@@ -343,7 +206,7 @@ bookingForm.addEventListener("submit", async (e) => {
     }
     selectedDate = data.date;
     closeModal();
-    await fetchBookings();
+    await refreshBookings();
   } catch (err) {
     setStatus(`Could not save booking: ${err.message}`, true);
   } finally {
@@ -358,7 +221,7 @@ deleteBookingBtn.addEventListener("click", async () => {
   try {
     await postToApi({ action: "delete", id: editingId });
     closeModal();
-    await fetchBookings();
+    await refreshBookings();
   } catch (err) {
     setStatus(`Could not delete booking: ${err.message}`, true);
   } finally {
@@ -384,8 +247,6 @@ nextMonthBtn.addEventListener("click", () => {
   renderCalendar();
 });
 
-renderAuthUI();
-initGoogleSignIn();
 renderCalendar();
 renderDayPanel();
-fetchBookings();
+refreshBookings();

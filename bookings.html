@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bookings List</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+  <header class="app-header">
+    <div class="header-top">
+      <div>
+        <h1>Catering Bookings</h1>
+        <p class="subtitle">Browse and filter all bookings</p>
+        <nav class="page-nav">
+          <a href="index.html" class="page-nav-link">Calendar</a>
+          <a href="bookings.html" class="page-nav-link active">Bookings List</a>
+        </nav>
+      </div>
+      <div id="authArea" class="auth-area">
+        <div id="googleSignInBtn"></div>
+        <div id="signedInAs" class="signed-in-as hidden">
+          <span id="userEmailLabel"></span>
+          <button id="signOutBtn" type="button" class="link-btn">Sign out</button>
+        </div>
+      </div>
+    </div>
+    <p id="syncStatus" class="sync-status"></p>
+  </header>
+
+  <main class="list-page">
+    <div id="venueFilters" class="venue-filters">
+      <button type="button" class="filter-btn active" data-venue="all">All Bookings</button>
+      <button type="button" class="filter-btn" data-venue="Ibunda Garden Hall">Ibunda Garden Hall</button>
+      <button type="button" class="filter-btn" data-venue="Ibunda Mini Hall">Ibunda Mini Hall</button>
+      <button type="button" class="filter-btn" data-venue="CSH A">CSH A</button>
+      <button type="button" class="filter-btn" data-venue="others">Others</button>
+    </div>
+
+    <div class="table-wrap">
+      <table class="bookings-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Client</th>
+            <th>Venue</th>
+            <th>Notes</th>
+            <th>Booked by</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="bookingsTableBody"></tbody>
+      </table>
+      <p id="emptyState" class="empty-state hidden">No bookings match this filter.</p>
+    </div>
+  </main>
+</div>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="config.js"></script>
+<script src="shared.js"></script>
+<script src="bookings.js"></script>
+</body>
+</html>
