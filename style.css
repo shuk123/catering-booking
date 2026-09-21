@@ -1,12 +1,12 @@
 :root {
-  --bg: #f6f4f0;
+  --bg: #eef7f8;
   --panel: #ffffff;
-  --ink: #2a231c;
-  --muted: #8a7f70;
-  --border: #e7e0d6;
-  --accent: #b5652f;
-  --accent-dark: #8f4f23;
-  --accent-soft: #f1e0d0;
+  --ink: #1c2b2c;
+  --muted: #5f7e81;
+  --border: #d3e6e8;
+  --accent: #00a9ae;
+  --accent-dark: #329f9c;
+  --accent-soft: #3ac3d6;
   --danger: #b3432f;
   --radius: 10px;
   font-size: 16px;
@@ -175,7 +175,7 @@ body {
   aspect-ratio: 1;
   border: 1px solid transparent;
   border-radius: 8px;
-  background: #fbfaf8;
+  background: #f5fafb;
   cursor: pointer;
   display: flex;
   flex-direction: column;
@@ -236,7 +236,7 @@ body {
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 10px 12px;
-  background: #fdfcfa;
+  background: #f7fbfc;
 }
 
 .booking-info {
@@ -381,7 +381,7 @@ body {
 }
 
 #bookingForm #venueOther:disabled {
-  background: #f1efe9;
+  background: #eef5f6;
   color: var(--muted);
   cursor: not-allowed;
 }
