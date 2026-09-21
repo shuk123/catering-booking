@@ -35,6 +35,19 @@ body {
   flex-wrap: wrap;
 }
 
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 4px;
+}
+
+.logo {
+  height: 56px;
+  width: auto;
+  flex-shrink: 0;
+}
+
 .app-header h1 {
   margin: 0 0 4px;
   font-size: 1.75rem;
