@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Catering Booking</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+  <header class="app-header">
+    <div class="header-top">
+      <div>
+        <h1>Catering Bookings</h1>
+        <p class="subtitle">Click a date to add a booking</p>
+      </div>
+      <div id="authArea" class="auth-area">
+        <div id="googleSignInBtn"></div>
+        <div id="signedInAs" class="signed-in-as hidden">
+          <span id="userEmailLabel"></span>
+          <button id="signOutBtn" type="button" class="link-btn">Sign out</button>
+        </div>
+      </div>
+    </div>
+    <p id="syncStatus" class="sync-status"></p>
+  </header>
+
+  <main class="layout">
+    <section class="calendar-panel">
+      <div class="calendar-nav">
+        <button id="prevMonth" class="nav-btn" aria-label="Previous month">&#8592;</button>
+        <h2 id="monthLabel"></h2>
+        <button id="nextMonth" class="nav-btn" aria-label="Next month">&#8594;</button>
+      </div>
+      <div class="weekdays">
+        <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+      </div>
+      <div id="calendarGrid" class="calendar-grid"></div>
+    </section>
+
+    <section class="day-panel">
+      <h2 id="selectedDateLabel">Select a date</h2>
+      <ul id="bookingList" class="booking-list"></ul>
+    </section>
+  </main>
+</div>
+
+<div id="overlay" class="overlay hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modalTitle">New Booking</h2>
+      <button id="closeModal" class="close-btn" aria-label="Close">&times;</button>
+    </div>
+    <form id="bookingForm">
+      <label for="bookingDate">Booking date</label>
+      <input type="date" id="bookingDate" required>
+
+      <label for="clientName">Client name</label>
+      <input type="text" id="clientName" placeholder="e.g. Aisha Rahman" required>
+
+      <label for="venue">Venue</label>
+      <select id="venue" required>
+        <option value="" disabled selected>Select a venue</option>
+        <option value="Ibunda Garden Hall">Ibunda Garden Hall</option>
+        <option value="Ibunda Mini Hall">Ibunda Mini Hall</option>
+        <option value="CSH A">CSH A</option>
+        <option value="__other__">Others (insert)</option>
+      </select>
+      <input type="text" id="venueOther" class="hidden" placeholder="Enter venue name" disabled>
+
+      <label for="notes">Notes</label>
+      <textarea id="notes" rows="4" placeholder="Guest count, menu, special requests..."></textarea>
+
+      <div class="modal-actions">
+        <button type="button" id="deleteBooking" class="btn danger hidden">Delete</button>
+        <div class="spacer"></div>
+        <button type="button" id="cancelForm" class="btn ghost">Cancel</button>
+        <button type="submit" class="btn primary">Save Booking</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
