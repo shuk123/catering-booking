@@ -43,13 +43,30 @@ async function refreshBookings() {
     setStatus("Not connected: set API_URL in config.js to your deployed Apps Script URL.", true);
     return;
   }
+  // Bookings are only visible to signed-in users — the Apps Script backend
+  // verifies the ID token itself, so this isn't just a UI-level gate.
+  if (!currentUser) {
+    bookings = [];
+    setStatus("Sign in with Google to view bookings.", true);
+    if (typeof onBookingsUpdated === "function") onBookingsUpdated();
+    return;
+  }
   setStatus("Loading bookings…");
   try {
-    const res = await fetch(API_URL);
+    const url = `${API_URL}?token=${encodeURIComponent(currentUser.idToken)}`;
+    const res = await fetch(url);
     if (!res.ok) throw new Error(`Request failed (${res.status})`);
     const data = await res.json();
-    bookings = data.bookings || [];
-    setStatus("");
+    if (data.error) {
+      // Token expired/invalid server-side — drop the stale session so the
+      // person is prompted to sign in again rather than seeing stale data.
+      setCurrentUser(null);
+      bookings = [];
+      setStatus("Your session expired. Please sign in again.", true);
+    } else {
+      bookings = data.bookings || [];
+      setStatus("");
+    }
   } catch (err) {
     setStatus(`Could not load bookings: ${err.message}`, true);
   }
@@ -71,10 +88,11 @@ async function postToApi(payload) {
 }
 
 // --- Google Sign-In -----------------------------------------------------
-// The decoded profile is cached in localStorage purely so the person
-// doesn't have to re-click "Sign in" every page load; the ID token itself
-// is not stored or re-verified, which is an acceptable trade-off for an
-// internal booking tool but not a security boundary.
+// The decoded profile (plus the raw ID token, needed to authenticate reads
+// against the backend) is cached in localStorage so the person doesn't have
+// to re-click "Sign in" every page load. Tokens expire after about an hour;
+// once that happens the backend rejects it and refreshBookings() clears the
+// stale session, prompting a fresh sign-in.
 const AUTH_STORAGE_KEY = "catering-current-user";
 let currentUser = loadCurrentUser();
 
@@ -107,8 +125,9 @@ function parseJwt(token) {
 
 function handleCredentialResponse(response) {
   const payload = parseJwt(response.credential);
-  setCurrentUser({ email: payload.email, name: payload.name || payload.email });
+  setCurrentUser({ email: payload.email, name: payload.name || payload.email, idToken: response.credential });
   setStatus("");
+  refreshBookings();
 }
 
 function renderAuthUI() {
@@ -127,6 +146,7 @@ signOutBtn.addEventListener("click", () => {
   if (window.google?.accounts?.id) {
     google.accounts.id.disableAutoSelect();
   }
+  refreshBookings();
 });
 
 function initGoogleSignIn() {

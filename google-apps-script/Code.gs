@@ -10,6 +10,25 @@ const SHEET_HEADERS = ["id", "date", "clientName", "venue", "notes", "createdBy"
 // and preserved on edits so it always reflects who originally booked it.
 const EDITABLE_COLUMN_COUNT = 5;
 
+// Must match GOOGLE_CLIENT_ID in catering-booking/config.js — used to check
+// that a submitted Google ID token was actually issued for this app.
+const GOOGLE_CLIENT_ID = "674405153349-hbk3btuh2bfgq7jj0ov1pt001uunj2gs.apps.googleusercontent.com";
+
+// Verifies a Google Sign-In ID token via Google's tokeninfo endpoint (checks
+// signature, expiry, and audience). Returns the verified email, or null if
+// the token is missing, expired, or was not issued for this app.
+function verifiedEmail_(idToken) {
+  if (!idToken) return null;
+  const res = UrlFetchApp.fetch(
+    "https://oauth2.googleapis.com/tokeninfo?id_token=" + encodeURIComponent(idToken),
+    { muteHttpExceptions: true }
+  );
+  if (res.getResponseCode() !== 200) return null;
+  const claims = JSON.parse(res.getContentText());
+  if (claims.aud !== GOOGLE_CLIENT_ID || claims.email_verified !== "true") return null;
+  return claims.email;
+}
+
 function getSheet_() {
   return SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
 }
@@ -54,6 +73,10 @@ function findRowById_(sheet, id) {
 }
 
 function doGet(e) {
+  const email = verifiedEmail_(e.parameter.token);
+  if (!email) {
+    return jsonResponse_({ error: "unauthorized" });
+  }
   return jsonResponse_({ bookings: readBookings_() });
 }
 
