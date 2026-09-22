@@ -25,8 +25,17 @@ const signedInAsEl = document.getElementById("signedInAs");
 const userEmailLabel = document.getElementById("userEmailLabel");
 const signOutBtn = document.getElementById("signOutBtn");
 const adminNavLink = document.getElementById("adminNavLink");
+const bookingsNavLink = document.getElementById("bookingsNavLink");
 
 let bookings = [];
+// True only once the backend has actually confirmed this signed-in user is
+// authorized (not just that they're signed in to some Google account) —
+// used to keep the "Bookings List" nav link hidden from everyone else.
+let hasAccess = false;
+
+function updateBookingsNavVisibility() {
+  bookingsNavLink?.classList.toggle("hidden", !hasAccess);
+}
 
 function setStatus(message, isError) {
   syncStatus.textContent = message;
@@ -63,6 +72,8 @@ async function refreshBookings() {
   // verifies the ID token itself, so this isn't just a UI-level gate.
   if (!currentUser) {
     bookings = [];
+    hasAccess = false;
+    updateBookingsNavVisibility();
     setStatus("Sign in with Google to view bookings.", true);
     if (typeof onBookingsUpdated === "function") onBookingsUpdated();
     return;
@@ -79,14 +90,18 @@ async function refreshBookings() {
       // backend's specific message (which distinguishes the two) is shown.
       setCurrentUser(null);
       bookings = [];
+      hasAccess = false;
       setStatus(data.error, true);
     } else {
       bookings = data.bookings || [];
+      hasAccess = true;
       setStatus("");
     }
   } catch (err) {
+    hasAccess = false;
     setStatus(`Could not load bookings: ${err.message}`, true);
   }
+  updateBookingsNavVisibility();
   if (typeof onBookingsUpdated === "function") onBookingsUpdated();
 }
 
