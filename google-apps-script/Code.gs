@@ -28,8 +28,12 @@ const ADMIN_EMAILS = ["ibundacatering@gmail.com", "shukorabdullah95.sa@gmail.com
 
 const USERS_SHEET_NAME = "AllowedUsers";
 // Seeded once, the first time the AllowedUsers sheet is created, so the
-// people already actively using the app don't get locked out.
-const SEED_ALLOWED_EMAILS = ["shukorabdullah95.sa@gmail.com", "faiznaqib9@gmail.com"];
+// people already actively using the app don't get locked out. Role is
+// "staff" (can view + add/edit/delete bookings) or "viewer" (view only).
+const SEED_ALLOWED_USERS = [
+  { email: "shukorabdullah95.sa@gmail.com", role: "staff" },
+  { email: "faiznaqib9@gmail.com", role: "staff" },
+];
 
 // Verifies a Google Sign-In ID token via Google's tokeninfo endpoint (checks
 // signature, expiry, and audience). Returns the verified {email, name}, or
@@ -55,30 +59,54 @@ function getUsersSheet_() {
   let sheet = ss.getSheetByName(USERS_SHEET_NAME);
   if (!sheet) {
     sheet = ss.insertSheet(USERS_SHEET_NAME);
-    sheet.appendRow(["email"]);
-    SEED_ALLOWED_EMAILS.forEach(email => sheet.appendRow([email]));
+    sheet.appendRow(["email", "role"]);
+    SEED_ALLOWED_USERS.forEach(u => sheet.appendRow([u.email, u.role]));
   }
   return sheet;
 }
 
-function getAllowedEmails_() {
+// Rows from before "role" existed have a blank column B, which defaults to
+// "staff" here so nobody's access silently changes when this ships.
+function getAllowedUsers_() {
   const sheet = getUsersSheet_();
   const data = sheet.getDataRange().getValues();
-  const emails = [];
+  const users = [];
   for (let i = 1; i < data.length; i++) {
-    if (data[i][0]) emails.push(String(data[i][0]).toLowerCase().trim());
+    if (data[i][0]) {
+      users.push({
+        email: String(data[i][0]).toLowerCase().trim(),
+        role: String(data[i][1] || "staff").toLowerCase().trim() === "viewer" ? "viewer" : "staff",
+      });
+    }
   }
-  return emails;
+  return users;
+}
+
+function getAllowedEmails_() {
+  return getAllowedUsers_().map(u => u.email);
+}
+
+function findAllowedUser_(email) {
+  return getAllowedUsers_().find(u => u.email === email) || null;
 }
 
 function isAdmin_(email) {
   return !!email && ADMIN_EMAILS.map(e => e.toLowerCase()).includes(email);
 }
 
+// Can sign in and view bookings — admin, staff, or viewer.
 function isAuthorized_(email) {
   if (!email) return false;
   if (isAdmin_(email)) return true;
   return getAllowedEmails_().includes(email);
+}
+
+// Can create/edit/delete bookings — admin or staff, but not a viewer.
+function canWrite_(email) {
+  if (!email) return false;
+  if (isAdmin_(email)) return true;
+  const user = findAllowedUser_(email);
+  return !!user && user.role !== "viewer";
 }
 
 // A verified-but-not-allowlisted email gets a clearly different message
@@ -135,7 +163,8 @@ function doGet(e) {
   if (!isAuthorized_(email)) {
     return jsonResponse_({ error: authErrorMessage_(email) });
   }
-  return jsonResponse_({ bookings: readBookings_() });
+  const role = isAdmin_(email) ? "admin" : (findAllowedUser_(email) || {}).role || "staff";
+  return jsonResponse_({ bookings: readBookings_(), role: role });
 }
 
 function doPost(e) {
@@ -149,16 +178,23 @@ function doPost(e) {
     // --- Admin-only: manage the staff allowlist ---------------------
     if (payload.action === "listUsers") {
       if (!isAdmin_(email)) return jsonResponse_({ success: false, error: "Forbidden" });
-      return jsonResponse_({ success: true, emails: getAllowedEmails_() });
+      return jsonResponse_({ success: true, users: getAllowedUsers_() });
     }
 
     if (payload.action === "addUser") {
       if (!isAdmin_(email)) return jsonResponse_({ success: false, error: "Forbidden" });
       const newEmail = String(payload.email || "").toLowerCase().trim();
       if (!newEmail) return jsonResponse_({ success: false, error: "Email required" });
-      if (!getAllowedEmails_().includes(newEmail)) {
-        getUsersSheet_().appendRow([newEmail]);
+      const role = payload.role === "viewer" ? "viewer" : "staff";
+      const sheet = getUsersSheet_();
+      const data = sheet.getDataRange().getValues();
+      for (let i = 1; i < data.length; i++) {
+        if (String(data[i][0]).toLowerCase().trim() === newEmail) {
+          sheet.getRange(i + 1, 2).setValue(role); // already listed — just update their role
+          return jsonResponse_({ success: true });
+        }
       }
+      sheet.appendRow([newEmail, role]);
       return jsonResponse_({ success: true });
     }
 
@@ -176,9 +212,13 @@ function doPost(e) {
       return jsonResponse_({ success: true });
     }
 
-    // --- Everything else requires an authorized (staff or admin) user ---
-    if (!isAuthorized_(email)) {
-      return jsonResponse_({ success: false, error: authErrorMessage_(email) });
+    // --- Everything else requires write access (admin or staff, not a
+    // view-only viewer) ---
+    if (!canWrite_(email)) {
+      const message = isAuthorized_(email)
+        ? "Your account has view-only access. Ask an admin for edit access."
+        : authErrorMessage_(email);
+      return jsonResponse_({ success: false, error: message });
     }
 
     const sheet = getSheet_();

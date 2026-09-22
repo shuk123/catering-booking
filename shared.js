@@ -4,6 +4,12 @@
 
 const PRESET_VENUES = ["Ibunda Garden Hall", "Ibunda Mini Hall", "CSH A"];
 
+// Small inline icons (not a reproduction of any brand's logo — a generic
+// chat-bubble shape tinted WhatsApp-green, and a plain pencil) reused by the
+// day panel's icon buttons and the bookings table's action dropdown.
+const ICON_SHARE = `<svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M8 1a7 7 0 0 0-6.1 10.4L1 15l3.7-.9A7 7 0 1 0 8 1zm0 12.6c-1 0-2-.3-2.8-.8l-.2-.1-2.1.5.5-2-.1-.2A5.6 5.6 0 1 1 8 13.6z"/></svg>`;
+const ICON_EDIT = `<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 2l3 3-8 8H3v-3l8-8z"/></svg>`;
+
 // These venues book in fixed slots rather than free-form times. Each venue
 // has its own slot set and its own times for the same-sounding slot (Mini
 // Hall's "Malam" runs 8.30pm–11.30pm, the other two run 7pm–11pm) — ids are
@@ -67,6 +73,43 @@ function isVenueFullyBooked(venue, venueBookingsForDate) {
 function firstName(booking) {
   if (booking.createdByName) return booking.createdByName.split(" ")[0];
   return booking.createdBy || "";
+}
+
+const MALAY_DAYS = ["Ahad", "Isnin", "Selasa", "Rabu", "Khamis", "Jumaat", "Sabtu"]; // index 0 = Sunday
+
+// "2026-09-22" -> "Selasa, 22 September 2026"
+function formatMalayDate(dateStr) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  const dayName = MALAY_DAYS[date.getDay()];
+  const rest = date.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+  return `${dayName}, ${rest}`;
+}
+
+// Builds the pre-filled WhatsApp share text for a booking. wa.me with no
+// phone number opens WhatsApp's own chat picker, so the person shares it to
+// whichever chat/group they choose — there's no official way for a script
+// to post directly into an existing WhatsApp group.
+function buildWhatsAppMessage(booking) {
+  const lines = [
+    "*New Booking*",
+    "",
+    `*Client:* ${booking.clientName}`,
+    `*Date:* ${formatMalayDate(booking.date)}`,
+    `*Venue:* ${booking.venue}`,
+  ];
+  if (booking.timeSlots) {
+    lines.push(`*Slot:* ${formatTimeSlots(booking.timeSlots, booking.venue)}`);
+  }
+  if (booking.notes) {
+    lines.push(`*Notes:* ${booking.notes}`);
+  }
+  lines.push(`*Booked by:* ${firstName(booking) || "-"}`);
+  return lines.join("\n");
+}
+
+function whatsAppShareUrl(booking) {
+  return `https://wa.me/?text=${encodeURIComponent(buildWhatsAppMessage(booking))}`;
 }
 
 // Assigns each venue a distinct color (via a CSS class) for grouping in the
@@ -163,6 +206,10 @@ async function refreshBookings() {
     } else {
       bookings = data.bookings || [];
       hasAccess = true;
+      // Cached alongside the profile so canEdit()/requireEditAccess() work
+      // immediately on the next page load without waiting on this fetch.
+      currentUser.role = data.role || "staff";
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(currentUser));
       setStatus("");
     }
   } catch (err) {
@@ -274,6 +321,32 @@ function requireSignIn() {
   setStatus("Please sign in with Google before adding or editing bookings.", true);
   if (window.google?.accounts?.id) google.accounts.id.prompt();
   return false;
+}
+
+// Viewers can sign in and browse normally, but can't add/edit/delete —
+// enforced for real by the backend (see canWrite_ in Code.gs); this just
+// gives a clear message immediately instead of a round-trip to find out.
+// The popup is optional per-page (only index.html has write actions); pages
+// without it fall back to the status line.
+const viewOnlyOverlay = document.getElementById("viewOnlyOverlay");
+const closeViewOnlyModal = document.getElementById("closeViewOnlyModal");
+
+closeViewOnlyModal?.addEventListener("click", () => viewOnlyOverlay.classList.add("hidden"));
+viewOnlyOverlay?.addEventListener("click", (e) => {
+  if (e.target === viewOnlyOverlay) viewOnlyOverlay.classList.add("hidden");
+});
+
+function requireEditAccess() {
+  if (!requireSignIn()) return false;
+  if (currentUser.role === "viewer") {
+    if (viewOnlyOverlay) {
+      viewOnlyOverlay.classList.remove("hidden");
+    } else {
+      setStatus("Your account has view-only access. Ask an admin for edit access.", true);
+    }
+    return false;
+  }
+  return true;
 }
 
 renderAuthUI();

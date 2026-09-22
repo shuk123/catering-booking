@@ -18,8 +18,6 @@ function matchesFilter(booking) {
   return booking.venue === currentFilter;
 }
 
-const MALAY_DAYS = ["Ahad", "Isnin", "Selasa", "Rabu", "Khamis", "Jumaat", "Sabtu"]; // index 0 = Sunday
-
 function formatShortDate(dateStr) {
   const [y, m, d] = dateStr.split("-").map(Number);
   const date = new Date(y, m - 1, d);
@@ -52,6 +50,40 @@ function populatePrintMonthOptions() {
   if (keys.includes(previousValue)) printMonthSelect.value = previousValue;
 }
 
+// A single dropdown ("▾") per row, revealing Share/Edit, instead of two
+// separate links crowding the actions column.
+function buildActionsDropdown(b) {
+  const wrap = document.createElement("div");
+  wrap.className = "action-dropdown";
+  wrap.innerHTML = `
+    <button type="button" class="dropdown-toggle" aria-label="Actions" aria-haspopup="true" aria-expanded="false">&#9662;</button>
+    <div class="dropdown-menu hidden">
+      <a href="${whatsAppShareUrl(b)}" target="_blank" rel="noopener">${ICON_SHARE} Share to WhatsApp</a>
+      <a href="index.html?date=${encodeURIComponent(b.date)}">${ICON_EDIT} Edit</a>
+    </div>
+  `;
+  const toggle = wrap.querySelector(".dropdown-toggle");
+  const menu = wrap.querySelector(".dropdown-menu");
+  toggle.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const wasHidden = menu.classList.contains("hidden");
+    document.querySelectorAll(".dropdown-menu").forEach(m => m.classList.add("hidden"));
+    if (wasHidden) {
+      const rect = toggle.getBoundingClientRect();
+      menu.style.position = "fixed";
+      menu.style.top = `${rect.bottom + 4}px`;
+      menu.style.right = `${window.innerWidth - rect.right}px`;
+      menu.classList.remove("hidden");
+    }
+    toggle.setAttribute("aria-expanded", String(wasHidden));
+  });
+  return wrap;
+}
+
+document.addEventListener("click", () => {
+  document.querySelectorAll(".dropdown-menu").forEach(m => m.classList.add("hidden"));
+});
+
 function buildMonthTable(rows) {
   const wrap = document.createElement("div");
   wrap.className = "table-wrap";
@@ -81,8 +113,9 @@ function buildMonthTable(rows) {
       <td>${b.timeSlots ? escapeHtml(formatTimeSlots(b.timeSlots, b.venue)) : "—"}</td>
       <td class="notes-cell">${b.notes ? escapeHtml(b.notes) : "—"}</td>
       <td>${firstName(b) ? escapeHtml(firstName(b)) : "—"}</td>
-      <td><a class="btn ghost table-edit-link" href="index.html?date=${encodeURIComponent(b.date)}">Edit</a></td>
+      <td class="table-actions"></td>
     `;
+    tr.querySelector(".table-actions").appendChild(buildActionsDropdown(b));
     tbody.appendChild(tr);
   });
   return wrap;

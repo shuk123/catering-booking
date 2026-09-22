@@ -158,10 +158,13 @@ function buildBookingCard(b) {
       ${b.notes ? `<div class="notes-preview">${escapeHtml(b.notes)}</div>` : ""}
       ${firstName(b) ? `<div class="created-by">Booked by ${escapeHtml(firstName(b))}</div>` : ""}
     </div>
-    <button type="button" class="edit-btn">Edit</button>
+    <div class="booking-actions">
+      <a class="icon-btn share-icon-btn" href="${whatsAppShareUrl(b)}" target="_blank" rel="noopener" aria-label="Share to WhatsApp" title="Share to WhatsApp">${ICON_SHARE}</a>
+      <button type="button" class="icon-btn edit-icon-btn" aria-label="Edit booking" title="Edit booking">${ICON_EDIT}</button>
+    </div>
   `;
-  li.querySelector(".edit-btn").addEventListener("click", () => {
-    if (!requireSignIn()) return;
+  li.querySelector(".edit-icon-btn").addEventListener("click", () => {
+    if (!requireEditAccess()) return;
     openModal(selectedDate, b);
   });
   return li;
@@ -224,7 +227,7 @@ function renderDayPanel() {
   addBtn.className = "add-btn";
   addBtn.textContent = "+ Add booking for this date";
   addBtn.addEventListener("click", () => {
-    if (!requireSignIn()) return;
+    if (!requireEditAccess()) return;
     openModal(selectedDate, null);
   });
   bookingList.appendChild(addBtn);
@@ -340,7 +343,7 @@ bookingForm.addEventListener("submit", async (e) => {
   };
 
   if (!data.date || !data.clientName || !data.venue) return;
-  if (!requireSignIn()) return;
+  if (!requireEditAccess()) return;
 
   saveBtn.disabled = true;
   setStatus("Saving…");
@@ -362,6 +365,7 @@ bookingForm.addEventListener("submit", async (e) => {
 
 deleteBookingBtn.addEventListener("click", async () => {
   if (!editingId) return;
+  if (!requireEditAccess()) return;
   deleteBookingBtn.disabled = true;
   setStatus("Deleting…");
   try {

@@ -397,20 +397,39 @@ body {
   margin-top: 6px;
 }
 
-.edit-btn {
+.booking-actions {
+  display: flex;
   flex-shrink: 0;
-  padding: 6px 12px;
+  gap: 6px;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
   border-radius: 7px;
   border: 1px solid var(--border);
   background: var(--panel);
   color: var(--ink);
-  font-size: 0.8rem;
   cursor: pointer;
 }
 
-.edit-btn:hover {
+.icon-btn:hover {
   background: var(--accent-soft);
   border-color: var(--accent);
+}
+
+.share-icon-btn {
+  color: #1f8a4c;
+  border-color: #bfe3cc;
+}
+
+.share-icon-btn:hover {
+  background: #e7f7ed;
+  border-color: #1f8a4c;
 }
 
 .empty-state {
@@ -451,6 +470,22 @@ body {
   max-width: 420px;
   padding: 20px;
   box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+}
+
+.alert-modal {
+  max-width: 360px;
+}
+
+.alert-modal h2 {
+  margin: 0 0 10px;
+  font-size: 1.1rem;
+}
+
+.alert-modal p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
 }
 
 .modal-header {
@@ -709,11 +744,64 @@ body {
   background: var(--accent-soft);
 }
 
-.table-edit-link {
+.table-actions {
+  white-space: nowrap;
+  text-align: right;
+}
+
+.action-dropdown {
+  position: relative;
   display: inline-block;
-  padding: 5px 12px;
+}
+
+.dropdown-toggle {
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--ink);
+  cursor: pointer;
   font-size: 0.8rem;
+  line-height: 1;
+}
+
+.dropdown-toggle:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+/* Positioned via JS (position: fixed + computed top/right) rather than
+   position: absolute, since it otherwise gets clipped by .table-wrap's
+   overflow-x: auto (which forces overflow-y to auto too, per the CSS spec,
+   even though only the x-axis was meant to scroll). */
+.dropdown-menu {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  min-width: 180px;
+  z-index: 30;
+  overflow: hidden;
+}
+
+.dropdown-menu a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  font-size: 0.85rem;
+  color: var(--ink);
   text-decoration: none;
+  white-space: nowrap;
+}
+
+.dropdown-menu a:hover {
+  background: var(--accent-soft);
+}
+
+.dropdown-menu a:first-child {
+  color: #1f8a4c;
 }
 
 .table-wrap .empty-state {
@@ -750,6 +838,17 @@ body {
   outline-offset: 1px;
 }
 
+.add-user-form select,
+.role-select {
+  padding: 9px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  background: var(--panel);
+  color: var(--ink);
+}
+
 .user-list {
   list-style: none;
   margin: 0;
@@ -769,6 +868,12 @@ body {
   border-radius: 8px;
   padding: 10px 14px;
   font-size: 0.9rem;
+}
+
+.user-item span {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: break-word;
 }
 
 .user-item .btn.danger {

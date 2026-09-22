@@ -43,6 +43,10 @@
     <div id="adminPanel" class="hidden">
       <form id="addUserForm" class="add-user-form">
         <input type="email" id="newUserEmail" placeholder="staff@gmail.com" required>
+        <select id="newUserRole" aria-label="Access level">
+          <option value="staff">Staff (can add/edit)</option>
+          <option value="viewer">Viewer (view only)</option>
+        </select>
         <button type="submit" class="btn primary">Add</button>
       </form>
 
