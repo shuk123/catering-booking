@@ -18,12 +18,12 @@ const TIME_SLOTS_COLUMN = 7;
 // that a submitted Google ID token was actually issued for this app.
 const GOOGLE_CLIENT_ID = "674405153349-hbk3btuh2bfgq7jj0ov1pt001uunj2gs.apps.googleusercontent.com";
 
-// Permanent admin — always authorized, can manage the staff allowlist below,
-// and can never be removed via the admin page since it isn't stored in the
-// AllowedUsers sheet at all. Must match ADMIN_EMAIL in config.js (that copy
-// only controls whether the Admin UI is shown; this one is what's actually
-// enforced).
-const ADMIN_EMAIL = "ibundacatering@gmail.com";
+// Permanent admins — always authorized, can manage the staff allowlist
+// below, and can never be removed via the admin page since they aren't
+// stored in the AllowedUsers sheet at all. Must match ADMIN_EMAILS in
+// config.js (that copy only controls whether the Admin UI is shown; this
+// one is what's actually enforced).
+const ADMIN_EMAILS = ["ibundacatering@gmail.com", "shukorabdullah95.sa@gmail.com"];
 
 const USERS_SHEET_NAME = "AllowedUsers";
 // Seeded once, the first time the AllowedUsers sheet is created, so the
@@ -71,7 +71,7 @@ function getAllowedEmails_() {
 }
 
 function isAdmin_(email) {
-  return !!email && email === ADMIN_EMAIL.toLowerCase();
+  return !!email && ADMIN_EMAILS.map(e => e.toLowerCase()).includes(email);
 }
 
 function isAuthorized_(email) {

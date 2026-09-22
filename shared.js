@@ -157,7 +157,7 @@ function renderAuthUI() {
   }
   // Cosmetic only — the Apps Script backend enforces the real admin check,
   // so hiding/showing this link is just about not confusing non-admins.
-  adminNavLink?.classList.toggle("hidden", !(currentUser && currentUser.email === ADMIN_EMAIL));
+  adminNavLink?.classList.toggle("hidden", !(currentUser && ADMIN_EMAILS.includes(currentUser.email)));
   if (typeof onAuthChanged === "function") onAuthChanged();
 }
 

@@ -10,6 +10,6 @@ const API_URL = "https://script.google.com/macros/s/AKfycbx4dOEUcrNw0w_p5i7zYuS_
 const GOOGLE_CLIENT_ID = "674405153349-hbk3btuh2bfgq7jj0ov1pt001uunj2gs.apps.googleusercontent.com";
 
 // Only controls whether the "Admin" nav link/page is shown in the UI — the
-// real enforcement is the matching ADMIN_EMAIL constant in Code.gs, so
+// real enforcement is the matching ADMIN_EMAILS constant in Code.gs, so
 // changing this alone does not grant or revoke admin access.
-const ADMIN_EMAIL = "ibundacatering@gmail.com";
+const ADMIN_EMAILS = ["ibundacatering@gmail.com", "shukorabdullah95.sa@gmail.com"];

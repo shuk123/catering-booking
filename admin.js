@@ -6,7 +6,7 @@ const userList = document.getElementById("userList");
 const userListEmpty = document.getElementById("userListEmpty");
 
 function isAdminUser() {
-  return !!currentUser && currentUser.email === ADMIN_EMAIL;
+  return !!currentUser && ADMIN_EMAILS.includes(currentUser.email);
 }
 
 // Called by shared.js whenever sign-in state changes.
