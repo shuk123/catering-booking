@@ -61,6 +61,14 @@ function isVenueFullyBooked(venue, venueBookingsForDate) {
   return available !== null && available.length === 0;
 }
 
+// "Shukor Abdullah" -> "Shukor". Bookings created before createdByName
+// existed only have an email, so those fall back to showing the email as-is
+// rather than guessing a name out of the address.
+function firstName(booking) {
+  if (booking.createdByName) return booking.createdByName.split(" ")[0];
+  return booking.createdBy || "";
+}
+
 // Assigns each venue a distinct color (via a CSS class) for grouping in the
 // day panel — presets get fixed colors, any other venue name gets a
 // deterministic pick from a small fallback pool so it's stable across

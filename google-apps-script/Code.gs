@@ -5,12 +5,13 @@
 //   Who has access: Anyone
 // Copy the resulting URL into catering-booking/config.js as API_URL.
 
-// Columns 1-5 are freely editable. createdBy (col 6) is set once at creation
-// (from the verified signer, not the client) and preserved on edits.
-// timeSlots is appended as col 7, after createdBy, so existing rows in an
-// already-live sheet stay correctly aligned — inserting it earlier would
-// shift every existing row's createdBy into the wrong field on read.
-const SHEET_HEADERS = ["id", "date", "clientName", "venue", "notes", "createdBy", "timeSlots"];
+// Columns 1-5 are freely editable. createdBy/createdByName (col 6-ish) are
+// set once at creation (from the verified signer, not the client) and
+// preserved on edits. timeSlots and createdByName are appended after
+// createdBy, in the order they were added, so existing rows in an
+// already-live sheet stay correctly aligned — inserting a field earlier
+// would shift every existing row's later fields into the wrong column.
+const SHEET_HEADERS = ["id", "date", "clientName", "venue", "notes", "createdBy", "timeSlots", "createdByName"];
 const EDITABLE_COLUMN_COUNT = 5;
 const TIME_SLOTS_COLUMN = 7;
 
@@ -31,9 +32,9 @@ const USERS_SHEET_NAME = "AllowedUsers";
 const SEED_ALLOWED_EMAILS = ["shukorabdullah95.sa@gmail.com", "faiznaqib9@gmail.com"];
 
 // Verifies a Google Sign-In ID token via Google's tokeninfo endpoint (checks
-// signature, expiry, and audience). Returns the verified email, or null if
-// the token is missing, expired, or was not issued for this app.
-function verifiedEmail_(idToken) {
+// signature, expiry, and audience). Returns the verified {email, name}, or
+// null if the token is missing, expired, or was not issued for this app.
+function verifiedIdentity_(idToken) {
   if (!idToken) return null;
   const res = UrlFetchApp.fetch(
     "https://oauth2.googleapis.com/tokeninfo?id_token=" + encodeURIComponent(idToken),
@@ -42,7 +43,7 @@ function verifiedEmail_(idToken) {
   if (res.getResponseCode() !== 200) return null;
   const claims = JSON.parse(res.getContentText());
   if (claims.aud !== GOOGLE_CLIENT_ID || claims.email_verified !== "true") return null;
-  return claims.email.toLowerCase();
+  return { email: claims.email.toLowerCase(), name: claims.name || claims.email };
 }
 
 function getSheet_() {
@@ -129,7 +130,8 @@ function findRowById_(sheet, id) {
 }
 
 function doGet(e) {
-  const email = verifiedEmail_(e.parameter.token);
+  const identity = verifiedIdentity_(e.parameter.token);
+  const email = identity && identity.email;
   if (!isAuthorized_(email)) {
     return jsonResponse_({ error: authErrorMessage_(email) });
   }
@@ -141,7 +143,8 @@ function doPost(e) {
   lock.waitLock(10000);
   try {
     const payload = JSON.parse(e.postData.contents);
-    const email = verifiedEmail_(payload.token);
+    const identity = verifiedIdentity_(payload.token);
+    const email = identity && identity.email;
 
     // --- Admin-only: manage the staff allowlist ---------------------
     if (payload.action === "listUsers") {
@@ -183,8 +186,9 @@ function doPost(e) {
     if (payload.action === "create") {
       const b = payload.booking;
       const id = Utilities.getUuid();
-      // createdBy comes from the verified token, never the client payload.
-      sheet.appendRow([id, b.date, b.clientName, b.venue, b.notes || "", email, b.timeSlots || ""]);
+      // createdBy/createdByName come from the verified token, never the
+      // client payload.
+      sheet.appendRow([id, b.date, b.clientName, b.venue, b.notes || "", email, b.timeSlots || "", identity.name]);
       return jsonResponse_({ success: true, id: id });
     }
 

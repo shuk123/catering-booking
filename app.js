@@ -156,7 +156,7 @@ function buildBookingCard(b) {
       <div class="client">${escapeHtml(b.clientName)}</div>
       ${b.timeSlots ? `<div class="slot-preview">${escapeHtml(formatTimeSlots(b.timeSlots, b.venue))}</div>` : ""}
       ${b.notes ? `<div class="notes-preview">${escapeHtml(b.notes)}</div>` : ""}
-      ${b.createdBy ? `<div class="created-by">Booked by ${escapeHtml(b.createdBy)}</div>` : ""}
+      ${firstName(b) ? `<div class="created-by">Booked by ${escapeHtml(firstName(b))}</div>` : ""}
     </div>
     <button type="button" class="edit-btn">Edit</button>
   `;

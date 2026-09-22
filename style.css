@@ -300,14 +300,16 @@ body {
 }
 
 /* Each venue gets a distinct color, separate from the app's teal accent,
-   so a day with several venues booked is easy to scan at a glance. */
-.venue-group.venue-color-1 { --venue-color: #d97757; } /* Ibunda Garden Hall */
-.venue-group.venue-color-2 { --venue-color: #8859c9; } /* Ibunda Mini Hall */
-.venue-group.venue-color-3 { --venue-color: #c98a1f; } /* CSH A */
-.venue-group.venue-color-4 { --venue-color: #4f8fc0; }
-.venue-group.venue-color-5 { --venue-color: #5a9e6f; }
-.venue-group.venue-color-6 { --venue-color: #c25b8f; }
-.venue-group.venue-color-7 { --venue-color: #7a7a7a; }
+   so a day (or a printed page) with several venues booked is easy to scan
+   at a glance. Shared by the day panel's .venue-group and the print
+   view's .print-venue. */
+.venue-color-1 { --venue-color: #d97757; } /* Ibunda Garden Hall */
+.venue-color-2 { --venue-color: #8859c9; } /* Ibunda Mini Hall */
+.venue-color-3 { --venue-color: #c98a1f; } /* CSH A */
+.venue-color-4 { --venue-color: #4f8fc0; }
+.venue-color-5 { --venue-color: #5a9e6f; }
+.venue-color-6 { --venue-color: #c25b8f; }
+.venue-color-7 { --venue-color: #7a7a7a; }
 
 .venue-heading {
   display: flex;
@@ -592,11 +594,42 @@ body {
 
 /* Bookings list page */
 
+.list-toolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
 .venue-filters {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 18px;
+}
+
+#printOverlay label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin: 14px 0 4px;
+}
+
+#printOverlay select {
+  width: 100%;
+  padding: 9px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  background: var(--panel);
+  color: var(--ink);
+}
+
+#printOverlay select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 
 .filter-btn {
@@ -741,4 +774,113 @@ body {
 .user-item .btn.danger {
   padding: 5px 12px;
   font-size: 0.8rem;
+}
+
+/* Print / PDF view -------------------------------------------------- */
+/* Built and shown only for printing (see bookings.js's buildPrintView);
+   invisible in normal browsing. */
+
+#printView {
+  display: none;
+}
+
+@media print {
+  .app-header, .list-toolbar, #bookingsContainer, #emptyState, .add-btn {
+    display: none !important;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  .app {
+    max-width: none;
+    padding: 0;
+  }
+
+  #printView {
+    display: block;
+  }
+
+  .print-month {
+    break-inside: avoid;
+    margin-bottom: 24px;
+  }
+
+  /* One month per printed page/sheet — but no trailing blank page after
+     the last one. */
+  .print-month:not(:last-child) {
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .print-month-heading {
+    font-size: 1.2rem;
+    margin: 0 0 12px;
+    color: var(--ink);
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 4px;
+  }
+
+  .print-venue {
+    break-inside: avoid;
+    margin-bottom: 14px;
+    padding-left: 10px;
+    border-left: 3px solid var(--venue-color, var(--ink));
+  }
+
+  .print-venue-heading {
+    margin: 0 0 6px;
+    font-size: 0.95rem;
+    color: var(--venue-color, var(--ink));
+  }
+
+  /* Fixed layout + explicit column widths so every venue's table (each is
+     a separate <table> element) lines up identically, rather than each
+     one auto-sizing its columns to its own content. */
+  .print-table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+  }
+
+  .print-table th:nth-child(1), .print-table td:nth-child(1) { width: 16%; }
+  .print-table th:nth-child(2), .print-table td:nth-child(2) { width: 20%; }
+  .print-table th:nth-child(3), .print-table td:nth-child(3) { width: 14%; }
+  .print-table th:nth-child(4), .print-table td:nth-child(4) { width: 50%; }
+
+  .print-table th,
+  .print-table td {
+    text-align: left;
+    padding: 5px 8px;
+    border-bottom: 1px solid #ccc;
+    overflow-wrap: break-word;
+  }
+
+  .print-table th {
+    color: var(--muted);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+  }
+
+  .print-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+    padding-bottom: 14px;
+    border-bottom: 2px solid var(--ink);
+  }
+
+  .print-header img {
+    height: 50px;
+    width: auto;
+  }
+
+  .print-header h1 {
+    margin: 0;
+    font-size: 1.4rem;
+    color: var(--ink);
+  }
 }

@@ -36,17 +36,51 @@
   </header>
 
   <main class="list-page">
-    <div id="venueFilters" class="venue-filters">
-      <button type="button" class="filter-btn active" data-venue="all">All Bookings</button>
-      <button type="button" class="filter-btn" data-venue="Ibunda Garden Hall">Ibunda Garden Hall</button>
-      <button type="button" class="filter-btn" data-venue="Ibunda Mini Hall">Ibunda Mini Hall</button>
-      <button type="button" class="filter-btn" data-venue="CSH A">CSH A</button>
-      <button type="button" class="filter-btn" data-venue="others">Others</button>
+    <div class="list-toolbar">
+      <div id="venueFilters" class="venue-filters">
+        <button type="button" class="filter-btn active" data-venue="all">All Bookings</button>
+        <button type="button" class="filter-btn" data-venue="Ibunda Garden Hall">Ibunda Garden Hall</button>
+        <button type="button" class="filter-btn" data-venue="Ibunda Mini Hall">Ibunda Mini Hall</button>
+        <button type="button" class="filter-btn" data-venue="CSH A">CSH A</button>
+        <button type="button" class="filter-btn" data-venue="others">Others</button>
+      </div>
+      <button type="button" id="printBtn" class="btn primary">Print / Save as PDF</button>
     </div>
 
     <div id="bookingsContainer"></div>
     <p id="emptyState" class="empty-state hidden">No bookings match this filter.</p>
+
+    <div id="printView"></div>
   </main>
+</div>
+
+<div id="printOverlay" class="overlay hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Print Bookings</h2>
+      <button type="button" id="closePrintModal" class="close-btn" aria-label="Close">&times;</button>
+    </div>
+
+    <label for="printMonthSelect">Month</label>
+    <select id="printMonthSelect">
+      <option value="all">All months</option>
+    </select>
+
+    <label for="printVenueSelect">Venue</label>
+    <select id="printVenueSelect">
+      <option value="all">All venues</option>
+      <option value="Ibunda Garden Hall">Ibunda Garden Hall</option>
+      <option value="Ibunda Mini Hall">Ibunda Mini Hall</option>
+      <option value="CSH A">CSH A</option>
+      <option value="others">Others</option>
+    </select>
+
+    <div class="modal-actions">
+      <div class="spacer"></div>
+      <button type="button" id="cancelPrintModal" class="btn ghost">Cancel</button>
+      <button type="button" id="confirmPrintBtn" class="btn primary">Print</button>
+    </div>
+  </div>
 </div>
 
 <script src="https://accounts.google.com/gsi/client" async defer></script>
