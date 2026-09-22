@@ -4,11 +4,27 @@
 
 const PRESET_VENUES = ["Ibunda Garden Hall", "Ibunda Mini Hall", "CSH A"];
 
+// Ibunda Mini Hall books in fixed slots rather than free-form times.
+const TIME_SLOTS = [
+  { id: "morning", label: "Morning (11am – 1pm)" },
+  { id: "evening", label: "Evening (3pm – 6pm)" },
+  { id: "night", label: "Night (7pm – 10pm)" },
+];
+
+// "morning,night" -> "Morning, Night" for compact display in previews/tables.
+function formatTimeSlots(csv) {
+  if (!csv) return "";
+  return csv.split(",").map(s => s.trim()).filter(Boolean)
+    .map(id => (TIME_SLOTS.find(s => s.id === id)?.label || id).split(" (")[0])
+    .join(", ");
+}
+
 const syncStatus = document.getElementById("syncStatus");
 const googleSignInBtnContainer = document.getElementById("googleSignInBtn");
 const signedInAsEl = document.getElementById("signedInAs");
 const userEmailLabel = document.getElementById("userEmailLabel");
 const signOutBtn = document.getElementById("signOutBtn");
+const adminNavLink = document.getElementById("adminNavLink");
 
 let bookings = [];
 
@@ -79,7 +95,7 @@ async function postToApi(payload) {
     // text/plain avoids a CORS preflight against Apps Script; the body is
     // still JSON and is parsed as such server-side.
     headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({ ...payload, token: currentUser?.idToken }),
   });
   if (!res.ok) throw new Error(`Request failed (${res.status})`);
   const result = await res.json();
@@ -139,6 +155,10 @@ function renderAuthUI() {
     googleSignInBtnContainer.classList.remove("hidden");
     signedInAsEl.classList.add("hidden");
   }
+  // Cosmetic only — the Apps Script backend enforces the real admin check,
+  // so hiding/showing this link is just about not confusing non-admins.
+  adminNavLink?.classList.toggle("hidden", !(currentUser && currentUser.email === ADMIN_EMAIL));
+  if (typeof onAuthChanged === "function") onAuthChanged();
 }
 
 signOutBtn.addEventListener("click", () => {

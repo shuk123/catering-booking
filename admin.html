@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ibunda Booking</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+  <header class="app-header">
+    <div class="header-top">
+      <div>
+        <div class="brand">
+          <img src="assets/logo.jpg" alt="Ibunda Catering, Wedding & Event" class="logo">
+          <div>
+            <h1>Ibunda Bookings</h1>
+            <p class="subtitle">Manage who can sign in</p>
+          </div>
+        </div>
+        <nav class="page-nav">
+          <a href="index.html" class="page-nav-link">Calendar</a>
+          <a href="bookings.html" class="page-nav-link">Bookings List</a>
+          <a href="admin.html" id="adminNavLink" class="page-nav-link active hidden">Admin</a>
+        </nav>
+      </div>
+      <div id="authArea" class="auth-area">
+        <div id="googleSignInBtn"></div>
+        <div id="signedInAs" class="signed-in-as hidden">
+          <span id="userEmailLabel"></span>
+          <button id="signOutBtn" type="button" class="link-btn">Sign out</button>
+        </div>
+      </div>
+    </div>
+    <p id="syncStatus" class="sync-status"></p>
+  </header>
+
+  <main class="admin-page">
+    <p id="notAuthorized" class="empty-state hidden">
+      This page is only available to the Ibunda admin account. Sign in with that account to manage staff access.
+    </p>
+
+    <div id="adminPanel" class="hidden">
+      <form id="addUserForm" class="add-user-form">
+        <input type="email" id="newUserEmail" placeholder="staff@gmail.com" required>
+        <button type="submit" class="btn primary">Add</button>
+      </form>
+
+      <ul id="userList" class="user-list"></ul>
+      <p id="userListEmpty" class="empty-state hidden">No staff emails added yet.</p>
+    </div>
+  </main>
+</div>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="config.js"></script>
+<script src="shared.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>

@@ -12,6 +12,8 @@ const bookingDateInput = document.getElementById("bookingDate");
 const clientNameInput = document.getElementById("clientName");
 const venueInput = document.getElementById("venue");
 const venueOtherInput = document.getElementById("venueOther");
+const miniHallSlots = document.getElementById("miniHallSlots");
+const slotInputs = Array.from(document.querySelectorAll(".slot-input"));
 const notesInput = document.getElementById("notes");
 const saveBtn = document.getElementById("bookingForm").querySelector('button[type="submit"]');
 
@@ -110,6 +112,7 @@ function renderDayPanel() {
         <div class="booking-info">
           <div class="client">${escapeHtml(b.clientName)}</div>
           <div class="venue">${escapeHtml(b.venue)}</div>
+          ${b.timeSlots ? `<div class="slot-preview">${escapeHtml(formatTimeSlots(b.timeSlots))}</div>` : ""}
           ${b.notes ? `<div class="notes-preview">${escapeHtml(b.notes)}</div>` : ""}
           ${b.createdBy ? `<div class="created-by">Booked by ${escapeHtml(b.createdBy)}</div>` : ""}
         </div>
@@ -153,6 +156,10 @@ function openModal(dateStr, booking) {
     venueOtherInput.disabled = true;
   }
 
+  const selectedSlots = booking?.timeSlots ? booking.timeSlots.split(",").map(s => s.trim()) : [];
+  slotInputs.forEach(input => { input.checked = selectedSlots.includes(input.value); });
+  miniHallSlots.classList.toggle("hidden", venueInput.value !== "Ibunda Mini Hall");
+
   notesInput.value = booking ? booking.notes : "";
   deleteBookingBtn.classList.toggle("hidden", !booking);
   overlay.classList.remove("hidden");
@@ -165,6 +172,8 @@ function closeModal() {
   venueOtherInput.classList.add("hidden");
   venueOtherInput.required = false;
   venueOtherInput.disabled = true;
+  miniHallSlots.classList.add("hidden");
+  slotInputs.forEach(input => { input.checked = false; });
   editingId = null;
 }
 
@@ -177,6 +186,10 @@ venueInput.addEventListener("change", () => {
     venueOtherInput.value = "";
     venueOtherInput.focus();
   }
+
+  const isMiniHall = venueInput.value === "Ibunda Mini Hall";
+  miniHallSlots.classList.toggle("hidden", !isMiniHall);
+  if (!isMiniHall) slotInputs.forEach(input => { input.checked = false; });
 });
 
 bookingForm.addEventListener("submit", async (e) => {
@@ -186,11 +199,16 @@ bookingForm.addEventListener("submit", async (e) => {
     ? venueOtherInput.value.trim()
     : venueInput.value.trim();
 
+  const timeSlots = venue === "Ibunda Mini Hall"
+    ? slotInputs.filter(input => input.checked).map(input => input.value).join(",")
+    : "";
+
   const data = {
     date: bookingDateInput.value,
     clientName: clientNameInput.value.trim(),
     venue,
     notes: notesInput.value.trim(),
+    timeSlots,
   };
 
   if (!data.date || !data.clientName || !data.venue) return;
@@ -202,7 +220,7 @@ bookingForm.addEventListener("submit", async (e) => {
     if (editingId) {
       await postToApi({ action: "update", booking: { id: editingId, ...data } });
     } else {
-      await postToApi({ action: "create", booking: { ...data, createdBy: currentUser.email } });
+      await postToApi({ action: "create", booking: data });
     }
     selectedDate = data.date;
     closeModal();

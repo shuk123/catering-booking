@@ -21,6 +21,7 @@
         <nav class="page-nav">
           <a href="index.html" class="page-nav-link active">Calendar</a>
           <a href="bookings.html" class="page-nav-link">Bookings List</a>
+          <a href="admin.html" id="adminNavLink" class="page-nav-link hidden">Admin</a>
         </nav>
       </div>
       <div id="authArea" class="auth-area">
@@ -76,6 +77,13 @@
         <option value="__other__">Others (insert)</option>
       </select>
       <input type="text" id="venueOther" class="hidden" placeholder="Enter venue name" disabled>
+
+      <div id="miniHallSlots" class="slot-group hidden">
+        <label class="slot-group-label">Time slot(s)</label>
+        <label class="slot-checkbox"><input type="checkbox" class="slot-input" value="morning"> Morning (11am – 1pm)</label>
+        <label class="slot-checkbox"><input type="checkbox" class="slot-input" value="evening"> Evening (3pm – 6pm)</label>
+        <label class="slot-checkbox"><input type="checkbox" class="slot-input" value="night"> Night (7pm – 10pm)</label>
+      </div>
 
       <label for="notes">Notes</label>
       <textarea id="notes" rows="4" placeholder="Guest count, menu, special requests..."></textarea>

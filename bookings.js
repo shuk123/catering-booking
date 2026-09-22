@@ -34,6 +34,7 @@ function renderTable() {
       <td>${formatShortDate(b.date)}</td>
       <td>${escapeHtml(b.clientName)}</td>
       <td>${escapeHtml(b.venue)}</td>
+      <td>${b.timeSlots ? escapeHtml(formatTimeSlots(b.timeSlots)) : "—"}</td>
       <td class="notes-cell">${b.notes ? escapeHtml(b.notes) : "—"}</td>
       <td>${b.createdBy ? escapeHtml(b.createdBy) : "—"}</td>
       <td><a class="btn ghost table-edit-link" href="index.html?date=${encodeURIComponent(b.date)}">Edit</a></td>
