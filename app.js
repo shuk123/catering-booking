@@ -1,4 +1,7 @@
 const monthLabel = document.getElementById("monthLabel");
+const monthPicker = document.getElementById("monthPicker");
+const monthSelect = document.getElementById("monthSelect");
+const yearSelect = document.getElementById("yearSelect");
 const calendarGrid = document.getElementById("calendarGrid");
 const prevMonthBtn = document.getElementById("prevMonth");
 const nextMonthBtn = document.getElementById("nextMonth");
@@ -12,8 +15,8 @@ const bookingDateInput = document.getElementById("bookingDate");
 const clientNameInput = document.getElementById("clientName");
 const venueInput = document.getElementById("venue");
 const venueOtherInput = document.getElementById("venueOther");
-const miniHallSlots = document.getElementById("miniHallSlots");
-const slotInputs = Array.from(document.querySelectorAll(".slot-input"));
+const venueSlots = document.getElementById("venueSlots");
+const slotCheckboxes = document.getElementById("slotCheckboxes");
 const notesInput = document.getElementById("notes");
 const saveBtn = document.getElementById("bookingForm").querySelector('button[type="submit"]');
 
@@ -45,6 +48,53 @@ function onBookingsUpdated() {
 
 const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
+// Populate the month/year picker once, up front.
+MONTH_NAMES.forEach((name, i) => {
+  const opt = document.createElement("option");
+  opt.value = i;
+  opt.textContent = name;
+  monthSelect.appendChild(opt);
+});
+{
+  const currentYear = new Date().getFullYear();
+  for (let y = currentYear - 3; y <= currentYear + 10; y++) {
+    const opt = document.createElement("option");
+    opt.value = y;
+    opt.textContent = y;
+    yearSelect.appendChild(opt);
+  }
+}
+
+function openMonthPicker() {
+  monthSelect.value = viewMonth;
+  yearSelect.value = viewYear;
+  monthLabel.classList.add("hidden");
+  monthPicker.classList.remove("hidden");
+}
+
+function closeMonthPicker() {
+  monthPicker.classList.add("hidden");
+  monthLabel.classList.remove("hidden");
+}
+
+monthLabel.addEventListener("click", openMonthPicker);
+
+function applyMonthYearSelection() {
+  viewMonth = Number(monthSelect.value);
+  viewYear = Number(yearSelect.value);
+  renderCalendar();
+  closeMonthPicker();
+}
+
+monthSelect.addEventListener("change", applyMonthYearSelection);
+yearSelect.addEventListener("change", applyMonthYearSelection);
+
+document.addEventListener("click", (e) => {
+  if (!monthPicker.classList.contains("hidden") && !monthPicker.contains(e.target) && e.target !== monthLabel) {
+    closeMonthPicker();
+  }
+});
+
 function renderCalendar() {
   monthLabel.textContent = `${MONTH_NAMES[viewMonth]} ${viewYear}`;
   calendarGrid.innerHTML = "";
@@ -55,7 +105,9 @@ function renderCalendar() {
   }, {});
 
   const firstOfMonth = new Date(viewYear, viewMonth, 1);
-  const startWeekday = firstOfMonth.getDay();
+  // getDay() is 0=Sun..6=Sat; shift so the grid (Mon..Sun columns) starts
+  // on Monday, putting the Sat/Sun weekend together at the right edge.
+  const startWeekday = (firstOfMonth.getDay() + 6) % 7;
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
 
   for (let i = 0; i < startWeekday; i++) {
@@ -65,9 +117,13 @@ function renderCalendar() {
   }
 
   for (let day = 1; day <= daysInMonth; day++) {
-    const dateStr = toDateStr(new Date(viewYear, viewMonth, day));
+    const dateObj = new Date(viewYear, viewMonth, day);
+    const dateStr = toDateStr(dateObj);
+    const dow = dateObj.getDay(); // 0 = Sun, 6 = Sat
+    const isWeekend = dow === 0 || dow === 6;
+
     const cell = document.createElement("div");
-    cell.className = "day-cell";
+    cell.className = `day-cell ${isWeekend ? "weekend" : "weekday"}`;
     if (dateStr === todayStr) cell.classList.add("today");
     if (dateStr === selectedDate) cell.classList.add("selected");
 
@@ -76,6 +132,7 @@ function renderCalendar() {
     cell.appendChild(num);
 
     if (countsByDate[dateStr]) {
+      cell.classList.add("has-booking");
       const dot = document.createElement("span");
       dot.className = "dot";
       cell.appendChild(dot);
@@ -91,11 +148,28 @@ function renderCalendar() {
   }
 }
 
+function buildBookingCard(b) {
+  const li = document.createElement("li");
+  li.className = "booking-item";
+  li.innerHTML = `
+    <div class="booking-info">
+      <div class="client">${escapeHtml(b.clientName)}</div>
+      ${b.timeSlots ? `<div class="slot-preview">${escapeHtml(formatTimeSlots(b.timeSlots, b.venue))}</div>` : ""}
+      ${b.notes ? `<div class="notes-preview">${escapeHtml(b.notes)}</div>` : ""}
+      ${b.createdBy ? `<div class="created-by">Booked by ${escapeHtml(b.createdBy)}</div>` : ""}
+    </div>
+    <button type="button" class="edit-btn">Edit</button>
+  `;
+  li.querySelector(".edit-btn").addEventListener("click", () => {
+    if (!requireSignIn()) return;
+    openModal(selectedDate, b);
+  });
+  return li;
+}
+
 function renderDayPanel() {
   selectedDateLabel.textContent = formatLongDate(selectedDate);
-  const dayBookings = bookings
-    .filter(b => b.date === selectedDate)
-    .sort((a, b) => a.clientName.localeCompare(b.clientName));
+  const dayBookings = bookings.filter(b => b.date === selectedDate);
 
   bookingList.innerHTML = "";
 
@@ -105,24 +179,44 @@ function renderDayPanel() {
     empty.textContent = "No bookings for this date.";
     bookingList.appendChild(empty);
   } else {
-    dayBookings.forEach(b => {
-      const li = document.createElement("li");
-      li.className = "booking-item";
-      li.innerHTML = `
-        <div class="booking-info">
-          <div class="client">${escapeHtml(b.clientName)}</div>
-          <div class="venue">${escapeHtml(b.venue)}</div>
-          ${b.timeSlots ? `<div class="slot-preview">${escapeHtml(formatTimeSlots(b.timeSlots))}</div>` : ""}
-          ${b.notes ? `<div class="notes-preview">${escapeHtml(b.notes)}</div>` : ""}
-          ${b.createdBy ? `<div class="created-by">Booked by ${escapeHtml(b.createdBy)}</div>` : ""}
-        </div>
-        <button type="button" class="edit-btn">Edit</button>
+    // Presets first (in their usual order), then any other venue names
+    // encountered that day, alphabetically.
+    const otherVenues = Array.from(new Set(dayBookings.map(b => b.venue)))
+      .filter(v => !PRESET_VENUES.includes(v))
+      .sort((a, b) => a.localeCompare(b));
+    const venueOrder = [...PRESET_VENUES, ...otherVenues];
+
+    venueOrder.forEach(venue => {
+      const groupBookings = dayBookings
+        .filter(b => b.venue === venue)
+        .sort((a, b) => a.clientName.localeCompare(b.clientName));
+      if (groupBookings.length === 0) return;
+
+      const group = document.createElement("li");
+      group.className = `venue-group ${colorClassForVenue(venue)}`;
+
+      const available = availableSlotsForVenue(venue, groupBookings);
+      let availabilityHtml = "";
+      if (available !== null) {
+        availabilityHtml = available.length === 0
+          ? `<span class="venue-badge">Fully Booked</span>`
+          : `<span class="venue-available">Available: ${escapeHtml(available.map(s => s.label.split(" (")[0]).join(", "))}</span>`;
+      }
+
+      const heading = document.createElement("div");
+      heading.className = "venue-heading";
+      heading.innerHTML = `
+        <span class="venue-name">${escapeHtml(venue)}</span>
+        ${availabilityHtml}
       `;
-      li.querySelector(".edit-btn").addEventListener("click", () => {
-        if (!requireSignIn()) return;
-        openModal(selectedDate, b);
-      });
-      bookingList.appendChild(li);
+      group.appendChild(heading);
+
+      const itemsList = document.createElement("ul");
+      itemsList.className = "venue-group-items";
+      groupBookings.forEach(b => itemsList.appendChild(buildBookingCard(b)));
+      group.appendChild(itemsList);
+
+      bookingList.appendChild(group);
     });
   }
 
@@ -157,8 +251,7 @@ function openModal(dateStr, booking) {
   }
 
   const selectedSlots = booking?.timeSlots ? booking.timeSlots.split(",").map(s => s.trim()) : [];
-  slotInputs.forEach(input => { input.checked = selectedSlots.includes(input.value); });
-  miniHallSlots.classList.toggle("hidden", venueInput.value !== "Ibunda Mini Hall");
+  renderSlotCheckboxes(booking ? booking.venue : venueInput.value, selectedSlots);
 
   notesInput.value = booking ? booking.notes : "";
   deleteBookingBtn.classList.toggle("hidden", !booking);
@@ -172,9 +265,27 @@ function closeModal() {
   venueOtherInput.classList.add("hidden");
   venueOtherInput.required = false;
   venueOtherInput.disabled = true;
-  miniHallSlots.classList.add("hidden");
-  slotInputs.forEach(input => { input.checked = false; });
+  renderSlotCheckboxes("", []);
   editingId = null;
+}
+
+function currentVenueValue() {
+  return venueInput.value === "__other__" ? venueOtherInput.value.trim() : venueInput.value.trim();
+}
+
+// (Re)builds the slot checkboxes for whichever venue is selected — each
+// venue has its own slot set (or none), so the checkboxes can't be static.
+function renderSlotCheckboxes(venue, selectedIds) {
+  const slots = slotsForVenue(venue);
+  slotCheckboxes.innerHTML = "";
+  slots.forEach(slot => {
+    const label = document.createElement("label");
+    label.className = "slot-checkbox";
+    label.innerHTML = `<input type="checkbox" class="slot-input" value="${slot.id}"> ${escapeHtml(slot.label)}`;
+    label.querySelector("input").checked = selectedIds.includes(slot.id);
+    slotCheckboxes.appendChild(label);
+  });
+  venueSlots.classList.toggle("hidden", slots.length === 0);
 }
 
 // Keeps a "Time slot(s): ..." line at the top of Notes in sync with the
@@ -187,13 +298,14 @@ function syncNotesWithSlots() {
   }
   const rest = lines.join("\n");
 
-  const checked = slotInputs.filter(input => input.checked).map(input => input.value);
-  const slotLine = checked.length ? `Time slot(s): ${formatTimeSlots(checked.join(","))}` : "";
+  const checked = Array.from(slotCheckboxes.querySelectorAll(".slot-input"))
+    .filter(input => input.checked).map(input => input.value);
+  const slotLine = checked.length ? `Time slot(s): ${formatTimeSlots(checked.join(","), currentVenueValue())}` : "";
 
   notesInput.value = slotLine ? (rest ? `${slotLine}\n\n${rest}` : slotLine) : rest;
 }
 
-miniHallSlots.addEventListener("change", (e) => {
+slotCheckboxes.addEventListener("change", (e) => {
   if (e.target.classList.contains("slot-input")) syncNotesWithSlots();
 });
 
@@ -207,24 +319,17 @@ venueInput.addEventListener("change", () => {
     venueOtherInput.focus();
   }
 
-  const isMiniHall = venueInput.value === "Ibunda Mini Hall";
-  miniHallSlots.classList.toggle("hidden", !isMiniHall);
-  if (!isMiniHall) {
-    slotInputs.forEach(input => { input.checked = false; });
-    syncNotesWithSlots();
-  }
+  renderSlotCheckboxes(venueInput.value, []);
+  syncNotesWithSlots();
 });
 
 bookingForm.addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  const venue = venueInput.value === "__other__"
-    ? venueOtherInput.value.trim()
-    : venueInput.value.trim();
+  const venue = currentVenueValue();
 
-  const timeSlots = venue === "Ibunda Mini Hall"
-    ? slotInputs.filter(input => input.checked).map(input => input.value).join(",")
-    : "";
+  const timeSlots = Array.from(slotCheckboxes.querySelectorAll(".slot-input"))
+    .filter(input => input.checked).map(input => input.value).join(",");
 
   const data = {
     date: bookingDateInput.value,

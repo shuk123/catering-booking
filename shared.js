@@ -4,19 +4,76 @@
 
 const PRESET_VENUES = ["Ibunda Garden Hall", "Ibunda Mini Hall", "CSH A"];
 
-// Ibunda Mini Hall books in fixed slots rather than free-form times.
-const TIME_SLOTS = [
-  { id: "morning", label: "Morning (11am – 1pm)" },
-  { id: "evening", label: "Evening (3pm – 6pm)" },
-  { id: "night", label: "Night (7pm – 10pm)" },
-];
+// These venues book in fixed slots rather than free-form times. Each venue
+// has its own slot set (Mini Hall's "night" runs 7–10pm, the other two run
+// 7–11pm) — ids are only unique per-venue, not globally, so formatTimeSlots
+// always needs the venue to resolve the right label.
+const VENUE_TIME_SLOTS = {
+  "Ibunda Mini Hall": [
+    { id: "morning", label: "Morning (11am – 1pm)" },
+    { id: "evening", label: "Evening (3pm – 6pm)" },
+    { id: "night", label: "Night (7pm – 10pm)" },
+  ],
+  "Ibunda Garden Hall": [
+    { id: "day", label: "Day (10am – 4pm)" },
+    { id: "night", label: "Night (7pm – 11pm)" },
+  ],
+  "CSH A": [
+    { id: "day", label: "Day (10am – 4pm)" },
+    { id: "night", label: "Night (7pm – 11pm)" },
+  ],
+};
+
+function slotsForVenue(venue) {
+  return VENUE_TIME_SLOTS[venue] || [];
+}
 
 // "morning,night" -> "Morning, Night" for compact display in previews/tables.
-function formatTimeSlots(csv) {
+function formatTimeSlots(csv, venue) {
   if (!csv) return "";
+  const slots = slotsForVenue(venue);
   return csv.split(",").map(s => s.trim()).filter(Boolean)
-    .map(id => (TIME_SLOTS.find(s => s.id === id)?.label || id).split(" (")[0])
+    .map(id => (slots.find(s => s.id === id)?.label || id).split(" (")[0])
     .join(", ");
+}
+
+// The slots a venue offers that are NOT yet covered by any booking on the
+// same date, or null if the venue has no slot concept at all (distinct
+// from an empty array, which means "has slots, but none are free").
+function availableSlotsForVenue(venue, venueBookingsForDate) {
+  const slots = slotsForVenue(venue);
+  if (slots.length === 0) return null;
+  const bookedIds = new Set();
+  venueBookingsForDate.forEach(b => {
+    (b.timeSlots || "").split(",").map(s => s.trim()).filter(Boolean).forEach(id => bookedIds.add(id));
+  });
+  return slots.filter(slot => !bookedIds.has(slot.id));
+}
+
+// True once every slot a venue offers is covered by at least one booking
+// on the same date. Venues with no slot concept (e.g. a custom "Others"
+// venue) are never considered fully booked.
+function isVenueFullyBooked(venue, venueBookingsForDate) {
+  const available = availableSlotsForVenue(venue, venueBookingsForDate);
+  return available !== null && available.length === 0;
+}
+
+// Assigns each venue a distinct color (via a CSS class) for grouping in the
+// day panel — presets get fixed colors, any other venue name gets a
+// deterministic pick from a small fallback pool so it's stable across
+// re-renders without needing to track assignments anywhere.
+const VENUE_COLOR_MAP = {
+  "Ibunda Garden Hall": "venue-color-1",
+  "Ibunda Mini Hall": "venue-color-2",
+  "CSH A": "venue-color-3",
+};
+const VENUE_COLOR_FALLBACKS = ["venue-color-4", "venue-color-5", "venue-color-6", "venue-color-7"];
+
+function colorClassForVenue(venue) {
+  if (VENUE_COLOR_MAP[venue]) return VENUE_COLOR_MAP[venue];
+  let hash = 0;
+  for (let i = 0; i < venue.length; i++) hash = (hash * 31 + venue.charCodeAt(i)) >>> 0;
+  return VENUE_COLOR_FALLBACKS[hash % VENUE_COLOR_FALLBACKS.length];
 }
 
 const syncStatus = document.getElementById("syncStatus");

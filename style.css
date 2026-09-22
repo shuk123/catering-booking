@@ -7,6 +7,7 @@
   --accent: #00a9ae;
   --accent-dark: #329f9c;
   --accent-soft: #3ac3d6;
+  --weekend-bg: #cdf0f2;
   --danger: #b3432f;
   --radius: 10px;
   font-size: 16px;
@@ -150,9 +151,42 @@ body {
   margin-bottom: 12px;
 }
 
-.calendar-nav h2 {
+.month-label-btn {
   margin: 0;
   font-size: 1.1rem;
+  font-weight: 700;
+  font-family: inherit;
+  color: var(--ink);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.month-label-btn:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.month-picker {
+  display: flex;
+  gap: 6px;
+}
+
+.month-picker select {
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  background: var(--panel);
+  color: var(--ink);
+}
+
+.month-picker select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 
 .nav-btn {
@@ -205,6 +239,30 @@ body {
   cursor: default;
 }
 
+/* Most bookings land on weekends, so weekends get visual weight and plain
+   weekdays recede — days with a real booking always stay fully visible
+   regardless (e.g. a public holiday), via the :not(.has-booking) guards. */
+.day-cell.weekend {
+  background: var(--weekend-bg);
+  border-color: var(--accent);
+}
+
+.day-cell.weekend span:first-child {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--accent-dark);
+}
+
+.day-cell.weekday:not(.has-booking):not(.today):not(.selected) {
+  background: transparent;
+}
+
+.day-cell.weekday:not(.has-booking):not(.today):not(.selected) span:first-child {
+  color: var(--muted);
+  font-weight: 400;
+  font-size: 0.8rem;
+}
+
 .day-cell.today {
   border-color: var(--accent);
   font-weight: 600;
@@ -238,6 +296,69 @@ body {
   padding: 0;
   display: flex;
   flex-direction: column;
+  gap: 16px;
+}
+
+/* Each venue gets a distinct color, separate from the app's teal accent,
+   so a day with several venues booked is easy to scan at a glance. */
+.venue-group.venue-color-1 { --venue-color: #d97757; } /* Ibunda Garden Hall */
+.venue-group.venue-color-2 { --venue-color: #8859c9; } /* Ibunda Mini Hall */
+.venue-group.venue-color-3 { --venue-color: #c98a1f; } /* CSH A */
+.venue-group.venue-color-4 { --venue-color: #4f8fc0; }
+.venue-group.venue-color-5 { --venue-color: #5a9e6f; }
+.venue-group.venue-color-6 { --venue-color: #c25b8f; }
+.venue-group.venue-color-7 { --venue-color: #7a7a7a; }
+
+.venue-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.venue-heading::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--venue-color);
+  flex-shrink: 0;
+}
+
+.venue-name {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--venue-color);
+}
+
+.venue-badge {
+  background: var(--venue-color);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+.venue-available {
+  background: transparent;
+  color: var(--venue-color);
+  border: 1px solid var(--venue-color);
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.venue-group-items {
+  list-style: none;
+  margin: 0;
+  padding-left: 14px;
+  border-left: 2px solid var(--venue-color);
+  display: flex;
+  flex-direction: column;
   gap: 10px;
 }
 
@@ -258,12 +379,6 @@ body {
 
 .booking-item .client {
   font-weight: 600;
-}
-
-.booking-item .venue {
-  color: var(--accent-dark);
-  font-size: 0.85rem;
-  margin-top: 2px;
 }
 
 .booking-item .notes-preview {
@@ -502,6 +617,16 @@ body {
   background: var(--accent);
   border-color: var(--accent);
   color: #fff;
+}
+
+.month-group {
+  margin-bottom: 24px;
+}
+
+.month-heading {
+  margin: 0 0 10px;
+  font-size: 1.05rem;
+  color: var(--accent-dark);
 }
 
 .table-wrap {

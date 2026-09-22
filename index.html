@@ -39,11 +39,15 @@
     <section class="calendar-panel">
       <div class="calendar-nav">
         <button id="prevMonth" class="nav-btn" aria-label="Previous month">&#8592;</button>
-        <h2 id="monthLabel"></h2>
+        <button type="button" id="monthLabel" class="month-label-btn"></button>
+        <div id="monthPicker" class="month-picker hidden">
+          <select id="monthSelect" aria-label="Month"></select>
+          <select id="yearSelect" aria-label="Year"></select>
+        </div>
         <button id="nextMonth" class="nav-btn" aria-label="Next month">&#8594;</button>
       </div>
       <div class="weekdays">
-        <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+        <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
       </div>
       <div id="calendarGrid" class="calendar-grid"></div>
     </section>
@@ -78,11 +82,9 @@
       </select>
       <input type="text" id="venueOther" class="hidden" placeholder="Enter venue name" disabled>
 
-      <div id="miniHallSlots" class="slot-group hidden">
+      <div id="venueSlots" class="slot-group hidden">
         <label class="slot-group-label">Time slot(s)</label>
-        <label class="slot-checkbox"><input type="checkbox" class="slot-input" value="morning"> Morning (11am – 1pm)</label>
-        <label class="slot-checkbox"><input type="checkbox" class="slot-input" value="evening"> Evening (3pm – 6pm)</label>
-        <label class="slot-checkbox"><input type="checkbox" class="slot-input" value="night"> Night (7pm – 10pm)</label>
+        <div id="slotCheckboxes"></div>
       </div>
 
       <label for="notes">Notes</label>
