@@ -74,11 +74,12 @@ async function refreshBookings() {
     if (!res.ok) throw new Error(`Request failed (${res.status})`);
     const data = await res.json();
     if (data.error) {
-      // Token expired/invalid server-side — drop the stale session so the
-      // person is prompted to sign in again rather than seeing stale data.
+      // Either the token is stale, or the account isn't on the allowlist —
+      // either way, drop the session so they can't see stale data and the
+      // backend's specific message (which distinguishes the two) is shown.
       setCurrentUser(null);
       bookings = [];
-      setStatus("Your session expired. Please sign in again.", true);
+      setStatus(data.error, true);
     } else {
       bookings = data.bookings || [];
       setStatus("");

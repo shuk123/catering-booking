@@ -80,6 +80,15 @@ function isAuthorized_(email) {
   return getAllowedEmails_().includes(email);
 }
 
+// A verified-but-not-allowlisted email gets a clearly different message
+// than a missing/expired token, so the person understands they need to be
+// added rather than thinking they just need to sign in again.
+function authErrorMessage_(email) {
+  return email
+    ? "This Google account is not authorized to use this app. Ask an admin to add it."
+    : "Your session expired. Please sign in again.";
+}
+
 function jsonResponse_(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
@@ -122,7 +131,7 @@ function findRowById_(sheet, id) {
 function doGet(e) {
   const email = verifiedEmail_(e.parameter.token);
   if (!isAuthorized_(email)) {
-    return jsonResponse_({ error: "unauthorized" });
+    return jsonResponse_({ error: authErrorMessage_(email) });
   }
   return jsonResponse_({ bookings: readBookings_() });
 }
@@ -166,7 +175,7 @@ function doPost(e) {
 
     // --- Everything else requires an authorized (staff or admin) user ---
     if (!isAuthorized_(email)) {
-      return jsonResponse_({ success: false, error: "unauthorized" });
+      return jsonResponse_({ success: false, error: authErrorMessage_(email) });
     }
 
     const sheet = getSheet_();
