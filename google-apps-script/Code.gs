@@ -24,7 +24,7 @@ const GOOGLE_CLIENT_ID = "674405153349-hbk3btuh2bfgq7jj0ov1pt001uunj2gs.apps.goo
 // stored in the AllowedUsers sheet at all. Must match ADMIN_EMAILS in
 // config.js (that copy only controls whether the Admin UI is shown; this
 // one is what's actually enforced).
-const ADMIN_EMAILS = ["ibundacatering@gmail.com", "shukorabdullah95.sa@gmail.com"];
+const ADMIN_EMAILS = ["ibundacatering@gmail.com", "shukorabdullah95.sa@gmail.com", "noorjannah0711@gmail.com"];
 
 const USERS_SHEET_NAME = "AllowedUsers";
 // Seeded once, the first time the AllowedUsers sheet is created, so the
