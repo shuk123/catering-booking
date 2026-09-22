@@ -351,3 +351,13 @@ function requireEditAccess() {
 
 renderAuthUI();
 initGoogleSignIn();
+
+// Lets the app be "installed" (Add to Home Screen / Chrome's install
+// prompt) with an offline fallback for the static shell. Silently no-ops
+// on browsers/contexts that don't support it (e.g. plain HTTP in some
+// browsers — service workers require HTTPS or localhost).
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  });
+}
