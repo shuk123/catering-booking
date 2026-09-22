@@ -177,6 +177,26 @@ function closeModal() {
   editingId = null;
 }
 
+// Keeps a "Time slot(s): ..." line at the top of Notes in sync with the
+// checked boxes, without touching whatever else the person has typed below.
+function syncNotesWithSlots() {
+  const lines = notesInput.value.split("\n");
+  if (lines[0]?.startsWith("Time slot(s):")) {
+    lines.shift();
+    if (lines[0] === "") lines.shift();
+  }
+  const rest = lines.join("\n");
+
+  const checked = slotInputs.filter(input => input.checked).map(input => input.value);
+  const slotLine = checked.length ? `Time slot(s): ${formatTimeSlots(checked.join(","))}` : "";
+
+  notesInput.value = slotLine ? (rest ? `${slotLine}\n\n${rest}` : slotLine) : rest;
+}
+
+miniHallSlots.addEventListener("change", (e) => {
+  if (e.target.classList.contains("slot-input")) syncNotesWithSlots();
+});
+
 venueInput.addEventListener("change", () => {
   const isOther = venueInput.value === "__other__";
   venueOtherInput.classList.toggle("hidden", !isOther);
@@ -189,7 +209,10 @@ venueInput.addEventListener("change", () => {
 
   const isMiniHall = venueInput.value === "Ibunda Mini Hall";
   miniHallSlots.classList.toggle("hidden", !isMiniHall);
-  if (!isMiniHall) slotInputs.forEach(input => { input.checked = false; });
+  if (!isMiniHall) {
+    slotInputs.forEach(input => { input.checked = false; });
+    syncNotesWithSlots();
+  }
 });
 
 bookingForm.addEventListener("submit", async (e) => {
