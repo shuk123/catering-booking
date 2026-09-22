@@ -5,22 +5,25 @@
 const PRESET_VENUES = ["Ibunda Garden Hall", "Ibunda Mini Hall", "CSH A"];
 
 // These venues book in fixed slots rather than free-form times. Each venue
-// has its own slot set (Mini Hall's "night" runs 7–10pm, the other two run
-// 7–11pm) — ids are only unique per-venue, not globally, so formatTimeSlots
-// always needs the venue to resolve the right label.
+// has its own slot set and its own times for the same-sounding slot (Mini
+// Hall's "Malam" runs 8.30pm–11.30pm, the other two run 7pm–11pm) — ids are
+// only unique per-venue, not globally, so formatTimeSlots always needs the
+// venue to resolve the right label. IDs are kept in English even though the
+// labels are Malay so existing stored bookings ("morning", "day", etc.)
+// keep matching correctly — only change label text here, never the ids.
 const VENUE_TIME_SLOTS = {
   "Ibunda Mini Hall": [
-    { id: "morning", label: "Morning (11am – 1pm)" },
-    { id: "evening", label: "Evening (3pm – 6pm)" },
-    { id: "night", label: "Night (7pm – 10pm)" },
+    { id: "morning", label: "Pagi (10.30am – 1.30pm)" },
+    { id: "evening", label: "Petang (3.30pm – 6.30pm)" },
+    { id: "night", label: "Malam (8.30pm – 11.30pm)" },
   ],
   "Ibunda Garden Hall": [
-    { id: "day", label: "Day (10am – 4pm)" },
-    { id: "night", label: "Night (7pm – 11pm)" },
+    { id: "day", label: "Siang (10am – 4pm)" },
+    { id: "night", label: "Malam (7pm – 11pm)" },
   ],
   "CSH A": [
-    { id: "day", label: "Day (10am – 4pm)" },
-    { id: "night", label: "Night (7pm – 11pm)" },
+    { id: "day", label: "Siang (10am – 4pm)" },
+    { id: "night", label: "Malam (7pm – 11pm)" },
   ],
 };
 
